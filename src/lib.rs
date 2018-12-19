@@ -260,32 +260,28 @@ impl Device {
 }
 
 impl Device {
-
     pub fn get_device_count() -> u32 {
-        unsafe {
-            rtlsdrsys::rtlsdr_get_device_count()
-        }
+        unsafe { rtlsdrsys::rtlsdr_get_device_count() }
     }
-    pub fn get_device_name(idx : u32) -> Result<&'static str, Error> {
-        let cstr = unsafe {rtlsdrsys::rtlsdr_get_device_name(idx)};
+    pub fn get_device_name(idx: u32) -> Result<&'static str, Error> {
+        let cstr = unsafe { rtlsdrsys::rtlsdr_get_device_name(idx) };
 
-            let c_str = unsafe { std::ffi::CStr::from_ptr(cstr) };
-            // TODO: use failure trait to wrap the conversion error
-            let str_slice: &str = c_str.to_str().map_err(|_| Error::new(-1))?;
-            Ok(str_slice)
+        let c_str = unsafe { std::ffi::CStr::from_ptr(cstr) };
+        // TODO: use failure trait to wrap the conversion error
+        let str_slice: &str = c_str.to_str().map_err(|_| Error::new(-1))?;
+        Ok(str_slice)
     }
 
-    pub fn get_index_by_serial(serial : &str) -> Result<usize, Error> {
+    pub fn get_index_by_serial(serial: &str) -> Result<usize, Error> {
         // TODO: proper error propagation
-        let cstr = std::ffi::CString::new(serial).map_err(|_|Error::new(0))?;
+        let cstr = std::ffi::CString::new(serial).map_err(|_| Error::new(0))?;
         let index = unsafe { rtlsdrsys::rtlsdr_get_index_by_serial(cstr.as_ptr()) };
 
         match index {
-            idx if idx < 0  => Err(Error::new(index)),
+            idx if idx < 0 => Err(Error::new(index)),
             idx => Ok(idx as usize),
         }
     }
-
 
     pub fn new(index: u32) -> Result<Device, Error> {
         let mut dev: *mut rtlsdrsys::rtlsdr_dev_t = std::ptr::null_mut();
@@ -298,7 +294,6 @@ impl Device {
 
 // Reading
 impl Device {
-
     #[allow(dead_code)]
     unsafe extern "C" fn cbwrapper(
         buf: *mut ::std::os::raw::c_uchar,
