@@ -3,6 +3,8 @@ name = "rtlsdr-rs"
 version = "0.1.0"
 authors = ["Yuval Kohavi <yuval.kohavi@gmail.com>"]
 edition = "2018"
+description = "bindings for rtl-sdr"
+license = "Apache-2.0"
 
 [dependencies]
 
