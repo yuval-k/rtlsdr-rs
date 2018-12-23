@@ -54,7 +54,8 @@ impl Drop for Device {
 }
 
 struct CbWrapper<'a> {
-    cb: &'a mut dyn FnMut(&[u8]),
+    cb: &'a mut dyn FnMut( &mut Device, &[u8]),
+    device: &'a mut Device,
 }
 
 pub struct USBStrings {
@@ -302,7 +303,7 @@ impl Device {
     ) {
         let cb = ctx as *mut CbWrapper;
         let slice = std::slice::from_raw_parts(buf as *const u8, len as usize);
-        ((*cb).cb)(slice)
+        ((*cb).cb)((*cb).device, slice)
     }
 
     pub fn reset_buffer(&mut self) -> Result<(), Error> {
@@ -314,14 +315,15 @@ impl Device {
 
     pub fn read_async<CB>(&mut self, mut cb: CB) -> Result<(), Error>
     where
-        CB: FnMut(&[u8]),
+        CB: FnMut(&mut Self, &[u8]),
     {
-        let cbref: &mut dyn FnMut(&[u8]) = &mut cb;
-        let mut wrapper = CbWrapper { cb: cbref };
+        //TODO: pass the cancel function to the callback?
+        let cbref: &mut dyn FnMut(&mut Self, &[u8]) = &mut cb;
+        let mut wrapper = CbWrapper { cb: cbref, device: self };
 
         let ctx: *mut std::os::raw::c_void =
             &mut wrapper as *mut CbWrapper as *mut std::os::raw::c_void;
-        match unsafe { rtlsdrsys::rtlsdr_wait_async(self.dev, Some(Self::cbwrapper), ctx) } {
+        match unsafe { rtlsdrsys::rtlsdr_read_async(self.dev, Some(Self::cbwrapper), ctx, 0, 0) } {
             0 => Ok(()),
             err => Err(Error::new(err)),
         }
